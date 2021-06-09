@@ -82,6 +82,8 @@ public:
   //gs : true‚È‚çGramSchmidt
   Matrix<T> qrAsympShift(int rep, bool gs) const;
   Matrix<T> qrAsympShiftCp(int rep, bool gs) const;
+  //LU •ª‰ð
+  void lu(Matrix<T> *p, Matrix<T> *l, Matrix<T> *u) const;
 };
 
 
@@ -170,7 +172,7 @@ inline bool nextPermutation(std::vector<int> &vs, int &sgn) {
 
 template<class T>
 T Matrix<T>::det() const {
-  T sum = 0;
+  T sum = T(0);
   const int n = height();
   std::vector<int> perm(n);
   for (int i = 0; i < n; i++) perm[i] = i;
@@ -486,4 +488,39 @@ inline Matrix<T> &Matrix<T>::multplyColumn(int i, T c) {
   for (int k = 0; k < height(); k++)
     at(k, i) *= c;
   return *this;
+}
+
+template<class T>
+inline void Matrix<T>::lu(Matrix<T> *p, Matrix<T> *l, Matrix<T> *u) const {
+  int n = width();
+  p->resize(n, n);
+  l->resize(n, n);
+  u->resize(n, n);
+  *l = *this;
+  for (int i = 0; i < n; i++)
+    p->at(i, i) = 1;
+  for (int i = 0; i < n; i++) {
+    for (int j = i + 1; j < n; j++) {
+      if (l->at(i, i) == T(0)) {
+        for (int k = i + 1; k < n; k++)
+          if (l->at(k, i) != T(0)) {
+            l->swapRows(i, k);
+            p->at(i, i) = p->at(k, k) = 0;
+            p->at(i, k) = p->at(k, i) = 1;
+            break;
+          }
+      } else
+        l->at(j, i) /= l->at(i, i);
+      for (int k = i + 1; k < n; k++)
+        l->at(j, k) -= l->at(j, i) * l->at(i, k);
+    }
+  }
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      if (i > j) { u->at(i, j) = 0; continue; }
+      u->at(i, j) = l->at(i, j);
+      if (i == j)l->at(i, j) = 1;
+      else l->at(i, j) = 0;
+    }
+  }
 }
